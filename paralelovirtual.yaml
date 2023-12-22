@@ -24,4 +24,4 @@ action:
         homeassistant.turn_off
       {% endif %}
         target:
-      entity_id: !input entrada_switchs
+          entity_id: !input entrada_switchs
