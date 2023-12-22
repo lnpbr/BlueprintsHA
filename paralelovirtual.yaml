@@ -26,3 +26,10 @@ action:
     target:
       entity_id:
         !input entrada_switchs
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+
+mode: single
