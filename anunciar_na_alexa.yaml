@@ -2,6 +2,7 @@ blueprint:
   name: Anunciar via Alexa
   description: Anuncia em todas as caixas Echo selecionadas
   domain: script
+mode: queued
 fields:
   mensagem:
     selector:
@@ -49,5 +50,4 @@ sequence:
       volume_level: 0.3
     target:
       entity_id: "{{ onde_anunciar }}"
-mode: queued
 icon: mdi:bullhorn
