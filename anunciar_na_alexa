@@ -1,0 +1,53 @@
+blueprint:
+  name: Anunciar via Alexa
+  description: Anuncia em todas as caixas Echo selecionadas
+  domain: script
+fields:
+  mensagem:
+    selector:
+      text: null
+    name: Mensagem
+    description: O que anunciar?
+    required: true
+  onde_anunciar:
+    selector:
+      entity:
+        filter:
+          - integration: alexa_media
+            domain: media_player
+        multiple: true
+    name: Onde Anunciar
+    required: true
+    default: []
+    description: Escolha as Alexas
+sequence:
+  - service: media_player.volume_set
+    metadata: {}
+    data:
+      volume_level: 0.8
+    target:
+      entity_id: "{{ onde_anunciar }}"
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: notify.alexa_media
+    data:
+      message: "{{ mensagem }}"
+      data:
+        type: announce
+      target: "{{ onde_anunciar }}"
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+  - service: media_player.volume_set
+    metadata: {}
+    data:
+      volume_level: 0.3
+    target:
+      entity_id: "{{ onde_anunciar }}"
+mode: queue
+icon: mdi:bullhorn
