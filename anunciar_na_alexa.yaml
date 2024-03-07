@@ -49,5 +49,5 @@ sequence:
       volume_level: 0.3
     target:
       entity_id: "{{ onde_anunciar }}"
-mode: queue
+mode: queued
 icon: mdi:bullhorn
