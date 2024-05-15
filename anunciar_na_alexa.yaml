@@ -28,6 +28,7 @@ fields:
         max: 1
         step: 0.1
     default: 0.9
+    required: true
     name: Volume
     description: Escolha o volume do anúncio (padrão 90%)
 sequence:
