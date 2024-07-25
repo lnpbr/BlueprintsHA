@@ -1,5 +1,5 @@
 blueprint:
-  name: Paralelo Virtual
+  name: Paralelo Virtual com Grupos Zigbee
   description: Acenda/Apaga todos os switchs/lights do grupo simultaneamente
   domain: automation
   input:
@@ -37,7 +37,7 @@ action:
   - delay:
       hours: 0
       minutes: 0
-      seconds: 2
+      seconds: 1
       milliseconds: 0
 
 mode: single
