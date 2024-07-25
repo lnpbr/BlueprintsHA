@@ -1,0 +1,43 @@
+blueprint:
+  name: Paralelo Virtual
+  description: Acenda/Apaga todos os switchs/lights do grupo simultaneamente
+  domain: automation
+  input:
+    entrada_switchs:
+      name: Escolha os pontos de Iluminação
+      selector:
+            entity:
+              domain:
+                - switch
+                - light
+              multiple: true
+    entrada_grupozha:
+      name: Escolha o grupo Zigbee que correponde a todos os pontos
+      selector:
+            entity:
+              domain:
+                - switch
+                - light
+              multiple: false
+
+trigger:
+  platform: state
+  entity_id: !input entrada_switchs
+
+action:
+  - service: >
+      {% if trigger.to_state.state == "on" %}
+        homeassistant.turn_on
+      {% elif trigger.to_state.state == "off" %}
+        homeassistant.turn_off
+      {% endif %}
+    target:
+      entity_id:
+        !input entrada_grupozha
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 2
+      milliseconds: 0
+
+mode: single
