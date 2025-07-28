@@ -32,7 +32,7 @@ fields:
     name: Volume
     description: Escolha o volume do anúncio (padrão 90%)
 sequence:
-  - service: media_player.volume_set
+  - action: media_player.volume_set
     metadata: {}
     data:
       volume_level: "{{ volume }}"
@@ -43,7 +43,7 @@ sequence:
       minutes: 0
       seconds: 1
       milliseconds: 0
-  - service: notify.alexa_media
+  - action: notify.alexa_media
     data:
       message: "{{ mensagem }}"
       data:
@@ -54,7 +54,7 @@ sequence:
       minutes: 0
       seconds: 10
       milliseconds: 0
-  - service: media_player.volume_set
+  - action: media_player.volume_set
     metadata: {}
     data:
       volume_level: 0.3
