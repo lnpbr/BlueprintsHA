@@ -1,0 +1,62 @@
+blueprint:
+  name: Paralelo Virtual com Dimmer (transição suave)
+  description: Sincroniza múltiplos switches e dimmers com transição de brilho ao ligar/desligar.
+  domain: automation
+  input:
+    entrada_switchs:
+      name: Dispositivos de iluminação
+      description: Escolha os switches e lights que farão parte do paralelo virtual.
+      selector:
+        entity:
+          domain:
+            - switch
+            - light
+          multiple: true
+    tempo_transicao:
+      name: Tempo de transição (segundos)
+      description: Quanto tempo levará para o dimmer acender/apagar suavemente.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.5
+          unit_of_measurement: s
+
+trigger:
+  - platform: state
+    entity_id: !input entrada_switchs
+    to:
+      - 'on'
+      - 'off'
+
+condition:
+  # Evita loops: ignora mudanças disparadas pela própria automação
+  - condition: template
+    value_template: >
+      {{ trigger.from_state.context.id != trigger.to_state.context.id }}
+
+action:
+  - variables:
+      entidades: !input entrada_switchs
+      transicao: !input tempo_transicao
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'on' }}"
+        sequence:
+          - service: homeassistant.turn_on
+            data:
+              transition: "{{ transicao }}"
+            target:
+              entity_id: "{{ entidades }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'off' }}"
+        sequence:
+          - service: homeassistant.turn_off
+            data:
+              transition: "{{ transicao }}"
+            target:
+              entity_id: "{{ entidades }}"
+mode: single
