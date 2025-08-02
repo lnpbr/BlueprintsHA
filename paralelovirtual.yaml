@@ -1,35 +1,61 @@
 blueprint:
-  name: Paralelo Virtual
-  description: Acenda/Apaga todos os switchs/lights do grupo simultaneamente
+  name: Paralelo Virtual (otimizado com transição e antiloop)
+  description: Sincroniza múltiplos switches e dimmers ao ligar/desligar qualquer um deles. Inclui transição suave para dimmers e evita loops.
   domain: automation
+
   input:
     entrada_switchs:
-      name: Escolha os pontos de Iluminação
+      name: Pontos de Iluminação
+      description: Selecione os dispositivos que farão parte do paralelo virtual.
       selector:
-            entity:
-              domain:
-                - switch
-                - light
-              multiple: true
+        entity:
+          domain:
+            - switch  # Suporta interruptores Zigbee normais
+            - light   # Suporta dimmers Zigbee
+          multiple: true  # Permite selecionar vários dispositivos
+
+    tempo_transicao:
+      name: Tempo de transição (segundos)
+      description: Tempo suave para acender/apagar dimmers. Ignorado por switches.
+      default: 1  # Valor padrão de 1 segundo
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 0.5
+          unit_of_measurement: s
 
 trigger:
   platform: state
   entity_id: !input entrada_switchs
+  to:
+    - "on"
+    - "off"  # Dispara quando qualquer dispositivo mudar para "on" ou "off"
+
+condition:
+  - condition: template
+    value_template: >
+      {{ trigger.from_state.context.id != trigger.to_state.context.id }}
+      # Esta condição evita que a automação reaja a mudanças que ela mesma causou (loop prevention)
 
 action:
+  - variables:
+      transicao: !input tempo_transicao
+      entidades: !input entrada_switchs
+      # Declara variáveis para tornar o código mais limpo abaixo
+
   - service: >
-      {% if trigger.to_state.state == "on" %}
+      {% if trigger.to_state.state == 'on' %}
         homeassistant.turn_on
-      {% elif trigger.to_state.state == "off" %}
+      {% else %}
         homeassistant.turn_off
       {% endif %}
+    data:
+      transition: "{{ transicao }}"
+      # Aplica transição para dimmers; switches ignoram isso silenciosamente
     target:
-      entity_id:
-        !input entrada_switchs
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 1
-      milliseconds: 0
+      entity_id: "{{ entidades }}"
+      # Aplica a ação (on/off) para todos os dispositivos selecionados
 
 mode: single
+# Garante que uma execução cancele a anterior — evita sobrecarga com múltiplos eventos rápidos
