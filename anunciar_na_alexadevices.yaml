@@ -1,0 +1,107 @@
+blueprint:
+  name: "Anunciar via Alexa (Alexa Devices nativo, com volume e pré-chime)"
+  description: "Anuncia (announce) nas Alexas selecionadas usando a integração nativa Alexa Devices, com ajuste de volume antes e depois."
+  domain: script
+mode: queued
+icon: mdi:bullhorn
+
+fields:
+  mensagem:
+    name: "Mensagem"
+    description: "Texto a anunciar (pode usar SSML; sem <speak>…</speak>, só o conteúdo)."
+    required: true
+    selector:
+      text:
+
+  onde_anunciar:
+    name: "Onde anunciar (notify)"
+    description: "Selecione as entidades de anúncio criadas pelo Alexa Devices."
+    required: true
+    selector:
+      entity:
+        multiple: true
+        filter:
+          - domain: notify
+            integration: alexa_devices
+
+  dispositivos_volume:
+    name: "Dispositivos para ajustar volume (device_id)"
+    description: "Selecione os Echos onde o volume será ajustado (precisa ser device, não entity)."
+    required: true
+    selector:
+      device:
+        multiple: true
+        filter:
+          - integration: alexa_devices
+
+  volume_antes:
+    name: "Volume antes do anúncio (0–10)"
+    description: "Nível de volume Alexa (0 a 10). Ex.: 7 ~ 70%."
+    required: true
+    default: 7
+    selector:
+      number:
+        min: 0
+        max: 10
+        step: 1
+        mode: slider
+
+  ajustar_volume_depois:
+    name: "Ajustar volume depois do anúncio?"
+    description: "Se habilitado, define um volume mais baixo após o anúncio."
+    required: true
+    default: true
+    selector:
+      boolean:
+
+  volume_depois:
+    name: "Volume depois do anúncio (0–10)"
+    description: "Nível de volume Alexa (0 a 10) após aguardar alguns segundos."
+    required: false
+    default: 3
+    selector:
+      number:
+        min: 0
+        max: 10
+        step: 1
+        mode: slider
+
+  atraso_para_abaixar:
+    name: "Atraso para abaixar volume (segundos)"
+    description: "Tempo de espera antes de aplicar o volume pós-anúncio."
+    required: true
+    default: 8
+    selector:
+      number:
+        min: 0
+        max: 30
+        step: 1
+        mode: box
+
+sequence:
+  - repeat:
+      for_each: "{{ dispositivos_volume }}"
+      sequence:
+        - action: alexa_devices.send_text_command
+          data:
+            device_id: "{{ repeat.item }}"
+            text_command: "set volume to {{ volume_antes | int }}"
+
+  - action: notify.send_message
+    data:
+      message: "{{ mensagem }}"
+    target:
+      entity_id: "{{ onde_anunciar }}"
+
+  - choose:
+      - conditions: "{{ ajustar_volume_depois and (volume_depois is number) }}"
+        sequence:
+          - delay:
+              seconds: "{{ atraso_para_abaixar | int }}"
+          - repeat:
+              for_each: "{{ dispositivos_volume }}"
+              sequence:
+                - action: alexa_devices.send_text_command
+                  data:
+                    device_id: "{{ repeat.item }}"
+                    text_command: "set volume to {{ volume_depois | int }}"
