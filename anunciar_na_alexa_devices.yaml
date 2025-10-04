@@ -15,7 +15,7 @@ fields:
 
   onde_anunciar:
     name: "Onde anunciar (notify)"
-    description: "Selecione as entidades de anúncio criadas pelo Alexa Devices. Dica: use grupos no app Alexa para evitar rate-limit."
+    description: "Selecione as entidades de anúncio criadas pelo Alexa Devices."
     required: true
     selector:
       entity:
