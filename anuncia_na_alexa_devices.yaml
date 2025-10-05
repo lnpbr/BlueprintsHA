@@ -1,0 +1,76 @@
+blueprint:
+  name: "Anunciar via Alexa Devices"
+  description: "Seleciona dispositivos Alexa; anuncia em notify.*_announce; ajusta volume antes e volta a 3."
+  domain: script
+mode: queued
+icon: mdi:bullhorn
+
+fields:
+  mensagem:
+    name: "Mensagem"
+    required: true
+    selector:
+      text:
+
+  dispositivos:
+    name: "Dispositivos Alexa"
+    required: true
+    selector:
+      device:
+        multiple: false
+        filter:
+          - integration: alexa_devices
+
+  volume:
+    name: "Volume"
+    required: true
+    default: 9
+    selector:
+      number:
+        min: 0
+        max: 10
+        step: 1
+
+sequence:
+  - variables:
+      devs: "{{ dispositivos }}"
+      announce_entities: >
+        {% set ns = namespace(list=[]) %}
+        {% for dev in devs %}
+          {% set ents = device_entities(dev)
+            | select('match','.*announce')
+            | list %}
+          {% if ents|length > 0 %}
+            {% set ns.list = ns.list + [ents[0]] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.list }}
+  - repeat:
+      for_each: "{{ devs }}"
+      sequence:
+        - action: alexa_devices.send_text_command
+          data:
+            device_id: "{{ repeat.item }}"
+            text_command: "defina o volume para {{ volume | int }}"
+
+  - delay:
+      seconds: 2
+
+  - action: notify.send_message
+    data:
+      message: "{{ mensagem }}"
+    target:
+      entity_id: "{{ announce_entities }}"
+
+  - delay:
+      seconds: 6
+
+  - repeat:
+      for_each: "{{ devs }}"
+      sequence:
+        - action: alexa_devices.send_text_command
+          data:
+            device_id: "{{ repeat.item }}"
+            text_command: "defina o volume para 3"
+mode: queued
+max: 2
