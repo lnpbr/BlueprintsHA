@@ -1,0 +1,60 @@
+blueprint:
+  name: "Anunciar via Alexa Devices"
+  description: "Anuncia via entidade notify (announce ou speak), ajusta volume antes e retorna para 3 depois."
+  domain: script
+mode: queued
+icon: mdi:bullhorn
+
+fields:
+  mensagem:
+    name: "Mensagem"
+    required: true
+    selector:
+      text:
+
+  onde_anunciar:
+    name: "Onde anunciar?"
+    required: true
+    selector:
+      entity:
+        multiple: false
+        filter:
+          - domain: notify
+            integration: alexa_devices
+
+  volume:
+    name: "Volume:"
+    required: true
+    default: 7
+    selector:
+      number:
+        min: 0
+        max: 10
+        step: 1
+
+sequence:
+  - variables:
+      selected_entity: "{{ onde_anunciar }}"
+      alexa_device_id: "{{ device_id(selected_entity) }}"
+
+  - action: alexa_devices.send_text_command
+    data:
+      device_id: "{{ alexa_device_id }}"
+      text_command: "volume {{ volume | int }}"
+
+  - delay:
+      seconds: 2
+
+  - action: notify.send_message
+    data:
+      message: "{{ mensagem }}"
+    target:
+      entity_id: "{{ selected_entity }}"
+
+  - delay:
+      seconds: 8
+
+  - action: alexa_devices.send_text_command
+    data:
+      device_id: "{{ alexa_device_id }}"
+      text_command: "volume 3"
